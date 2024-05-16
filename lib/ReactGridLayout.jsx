@@ -101,7 +101,10 @@ export default class ReactGridLayout extends React.Component<Props, State> {
     transformScale: 1,
     verticalCompact: true,
     compactType: "vertical",
+    // 如果true,栅栏不会改变位置
+    // 拖拽也是一样
     preventCollision: false,
+    // 拖入容器的组件
     droppingItem: {
       i: "__dropping-elem__",
       h: 1,
@@ -292,9 +295,11 @@ export default class ReactGridLayout extends React.Component<Props, State> {
     if (!l) return;
 
     // Create placeholder (display only)
+    // 创建占位符（仅显示）
     const placeholder = {
       w: l.w,
       h: l.h,
+      // 这里的x、y是指向的l引用的值，在下面的 moveElement 跟 compact 被改变
       x: l.x,
       y: l.y,
       placeholder: true,
@@ -303,6 +308,7 @@ export default class ReactGridLayout extends React.Component<Props, State> {
 
     // Move the element to the dragged location.
     const isUserAction = true;
+    // 先移动元素，这里会更改l的位置，从而更改placeholder的位置
     layout = moveElement(
       layout,
       l,
@@ -320,6 +326,7 @@ export default class ReactGridLayout extends React.Component<Props, State> {
     this.setState({
       layout: allowOverlap
         ? layout
+        // 然后处理碰撞
         : compact(layout, compactType(this.props), cols),
       activeDrag: placeholder
     });
@@ -588,6 +595,7 @@ export default class ReactGridLayout extends React.Component<Props, State> {
 
   /**
    * Given a grid item, set its style attributes & surround in a <Draggable>.
+   * 给定一个网格项，在＜可拖动＞中设置其样式属性和环绕。
    * @param  {Element} child React element.
    * @return {Element}       Element wrapped in draggable and properly placed.
    */
@@ -675,14 +683,19 @@ export default class ReactGridLayout extends React.Component<Props, State> {
   }
 
   // Called while dragging an element. Part of browser native drag/drop API.
+  //在拖动元素时调用。浏览器本机拖放API的一部分。
   // Native event target might be the layout itself, or an element within the layout.
+  //本机事件目标可能是布局本身，也可能是布局中的元素。
   onDragOver: DragOverEvent => void | false = e => {
     e.preventDefault(); // Prevent any browser native action
     e.stopPropagation();
 
     // we should ignore events from layout's children in Firefox
+    //我们应该忽略Firefox中布局子级的事件
     // to avoid unpredictable jumping of a dropping placeholder
+    //以避免放置占位符的不可预测的跳跃
     // FIXME remove this hack
+    //FIXME删除此破解
     if (
       isFirefox &&
       // $FlowIgnore can't figure this out
@@ -703,6 +716,7 @@ export default class ReactGridLayout extends React.Component<Props, State> {
       transformScale
     } = this.props;
     // Allow user to customize the dropping item or short-circuit the drop based on the results
+    //允许用户根据结果自定义投放项目或缩短投放时间
     // of the `onDragOver(e: Event)` callback.
     const onDragOverResult = onDropDragOver?.(e);
     if (onDragOverResult === false) {
@@ -716,9 +730,12 @@ export default class ReactGridLayout extends React.Component<Props, State> {
     const { layout } = this.state;
 
     // $FlowIgnore missing def
+    // 提供了元素的大小及其相对于视口的位置
+    // e.currentTarget 是当前容器对象
     const gridRect = e.currentTarget.getBoundingClientRect(); // The grid's position in the viewport
 
     // Calculate the mouse position relative to the grid
+    // 计算鼠标相对于网格的位置
     const layerX = e.clientX - gridRect.left;
     const layerY = e.clientY - gridRect.top;
     const droppingPosition = {
@@ -748,6 +765,7 @@ export default class ReactGridLayout extends React.Component<Props, State> {
       this.setState({
         droppingDOMNode: <div key={finalDroppingItem.i} />,
         droppingPosition,
+        // onDragOver 的时候 在 layout 里面添加一个占位元素
         layout: [
           ...layout,
           {
@@ -768,6 +786,7 @@ export default class ReactGridLayout extends React.Component<Props, State> {
     }
   };
 
+  // 只有这里可以将 droppingDOMNode 置空
   removeDroppingPlaceholder: () => void = () => {
     const { droppingItem, cols } = this.props;
     const { layout } = this.state;
@@ -842,9 +861,11 @@ export default class ReactGridLayout extends React.Component<Props, State> {
         onDragEnter={isDroppable ? this.onDragEnter : noop}
         onDragOver={isDroppable ? this.onDragOver : noop}
       >
+        {/* 外部调用组件传过来的 children */}
         {React.Children.map(this.props.children, child =>
           this.processGridItem(child)
         )}
+        {/* 外部拖入容器组件的时候，手动添加一个 processGridItem */}
         {isDroppable &&
           this.state.droppingDOMNode &&
           this.processGridItem(this.state.droppingDOMNode, true)}

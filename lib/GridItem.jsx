@@ -265,7 +265,9 @@ export default class GridItem extends React.Component<Props, State> {
   }
 
   // When a droppingPosition is present, this means we should fire a move event, as if we had moved
+  //当出现droppingPosition时，这意味着我们应该触发一个移动事件，就好像我们已经移动了一样
   // this element by `x, y` pixels.
+  //该元素乘以“x，y”像素。
   moveDroppingItem(prevProps: Props) {
     const { droppingPosition } = this.props;
     if (!droppingPosition) return;
@@ -284,6 +286,7 @@ export default class GridItem extends React.Component<Props, State> {
       droppingPosition.top !== prevDroppingPosition.top;
 
     if (!dragging) {
+      // 当没有拖拽发生的时候，手动触发拖拽开始
       this.onDragStart(droppingPosition.e, {
         node,
         deltaX: droppingPosition.left,
@@ -293,6 +296,7 @@ export default class GridItem extends React.Component<Props, State> {
       const deltaX = droppingPosition.left - dragging.left;
       const deltaY = droppingPosition.top - dragging.top;
 
+      // 当外部组件拖入容器内部的时候，手动触发拖拽事件
       this.onDrag(droppingPosition.e, {
         node,
         deltaX,
@@ -667,6 +671,7 @@ export default class GridItem extends React.Component<Props, State> {
           resizing: Boolean(this.state.resizing),
           "react-draggable": isDraggable,
           "react-draggable-dragging": Boolean(this.state.dragging),
+          // droppingPosition 为 true 的时候，dropping 的样式为 visibility: hidden;
           dropping: Boolean(droppingPosition),
           cssTransforms: useCSSTransforms
         }
