@@ -8,16 +8,11 @@ import {
   synchronizeLayoutWithChildren,
   validateLayout,
   noop,
-  type Layout,
-  type Pick
 } from "./utils";
 import {
   getBreakpointFromWidth,
   getColsFromBreakpoint,
   findOrGenerateResponsiveLayout,
-  type ResponsiveLayout,
-  type OnLayoutChangeCallback,
-  type Breakpoints
 } from "./responsiveUtils";
 import ReactGridLayout from "./ReactGridLayout";
 
@@ -31,66 +26,17 @@ const type = obj => Object.prototype.toString.call(obj);
  * @param  {String} breakpoint   Breakpoint: lg, md, sm, xs and etc.
  * @return {Array}
  */
-function getIndentationValue<T: ?[number, number]>(
-  param: { [key: string]: T } | T,
-  breakpoint: string
-): T {
+function getIndentationValue(
+  param,
+  breakpoint
+) {
   // $FlowIgnore TODO fix this typedef
   if (param == null) return null;
   // $FlowIgnore TODO fix this typedef
   return Array.isArray(param) ? param : param[breakpoint];
 }
 
-type State = {
-  layout: Layout,
-  breakpoint: string,
-  cols: number,
-  layouts?: ResponsiveLayout<string>
-};
-
-type Props<Breakpoint: string = string> = {|
-  ...React.ElementConfig<typeof ReactGridLayout>,
-
-  // Responsive config
-  breakpoint?: ?Breakpoint,
-  breakpoints: Breakpoints<Breakpoint>,
-  cols: { [key: Breakpoint]: number },
-  layouts: ResponsiveLayout<Breakpoint>,
-  width: number,
-  margin: { [key: Breakpoint]: [number, number] } | [number, number],
-  /* prettier-ignore */
-  containerPadding: { [key: Breakpoint]: ?[number, number] } | ?[number, number],
-
-  // Callbacks
-  onBreakpointChange: (Breakpoint, cols: number) => void,
-  onLayoutChange: OnLayoutChangeCallback,
-  onWidthChange: (
-    containerWidth: number,
-    margin: [number, number],
-    cols: number,
-    containerPadding: ?[number, number]
-  ) => void
-|};
-
-type DefaultProps = Pick<
-  Props<>,
-  {|
-    allowOverlap: 0,
-    breakpoints: 0,
-    cols: 0,
-    containerPadding: 0,
-    layouts: 0,
-    margin: 0,
-    onBreakpointChange: 0,
-    onLayoutChange: 0,
-    onWidthChange: 0
-  |}
->;
-
-export default class ResponsiveReactGridLayout extends React.Component<
-  Props<>,
-  State
-> {
+export default class ResponsiveReactGridLayout extends React.Component{
   // This should only include propTypes needed in this code; RGL itself
   // will do validation of the rest props passed to it.
   static propTypes = {
@@ -123,8 +69,8 @@ export default class ResponsiveReactGridLayout extends React.Component<
     containerPadding: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
 
     // layouts is an object mapping breakpoints to layouts.
-    // e.g. {lg: Layout, md: Layout, ...}
-    layouts(props: Props<>, propName: string) {
+    // e.g. {lg, md, ...}
+    layouts(props, propName) {
       if (type(props[propName]) !== "[object Object]") {
         throw new Error(
           "Layout property must be an object. Received: " +
@@ -157,10 +103,13 @@ export default class ResponsiveReactGridLayout extends React.Component<
     onLayoutChange: PropTypes.func,
 
     // Calls back with (containerWidth, margin, cols, containerPadding)
-    onWidthChange: PropTypes.func
+    onWidthChange: PropTypes.func,
+    children: PropTypes.object,
+    compactType: PropTypes.string,
+    verticalCompact: PropTypes.bool,
   };
 
-  static defaultProps: DefaultProps = {
+  static defaultProps = {
     breakpoints: { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 },
     cols: { lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 },
     containerPadding: { lg: null, md: null, sm: null, xs: null, xxs: null },
@@ -172,9 +121,9 @@ export default class ResponsiveReactGridLayout extends React.Component<
     onWidthChange: noop
   };
 
-  state: State = this.generateInitialState();
+  state = this.generateInitialState();
 
-  generateInitialState(): State {
+  generateInitialState() {
     const { width, breakpoints, layouts, cols } = this.props;
     const breakpoint = getBreakpointFromWidth(breakpoints, width);
     const colNo = getColsFromBreakpoint(breakpoint, cols);
@@ -200,9 +149,9 @@ export default class ResponsiveReactGridLayout extends React.Component<
   }
 
   static getDerivedStateFromProps(
-    nextProps: Props<*>,
-    prevState: State
-  ): ?$Shape<State> {
+    nextProps,
+    prevState
+  ) {
     if (!deepEqual(nextProps.layouts, prevState.layouts)) {
       // Allow parent to set layouts directly.
       const { breakpoint, cols } = prevState;
@@ -223,7 +172,7 @@ export default class ResponsiveReactGridLayout extends React.Component<
     return null;
   }
 
-  componentDidUpdate(prevProps: Props<*>) {
+  componentDidUpdate(prevProps) {
     // Allow parent to set width or breakpoint directly.
     if (
       this.props.width != prevProps.width ||
@@ -236,7 +185,7 @@ export default class ResponsiveReactGridLayout extends React.Component<
   }
 
   // wrap layouts so we do not need to pass layouts to child
-  onLayoutChange: Layout => void = (layout: Layout) => {
+  onLayoutChange = (layout) => {
     this.props.onLayoutChange(layout, {
       ...this.props.layouts,
       [this.state.breakpoint]: layout
@@ -247,14 +196,14 @@ export default class ResponsiveReactGridLayout extends React.Component<
    * When the width changes work through breakpoints and reset state with the new width & breakpoint.
    * Width changes are necessary to figure out the widget widths.
    */
-  onWidthChange(prevProps: Props<*>) {
+  onWidthChange(prevProps) {
     const { breakpoints, cols, layouts, compactType } = this.props;
     const newBreakpoint =
       this.props.breakpoint ||
       getBreakpointFromWidth(this.props.breakpoints, this.props.width);
 
     const lastBreakpoint = this.state.breakpoint;
-    const newCols: number = getColsFromBreakpoint(newBreakpoint, cols);
+    const newCols = getColsFromBreakpoint(newBreakpoint, cols);
     const newLayouts = { ...layouts };
 
     // Breakpoint change
@@ -315,7 +264,7 @@ export default class ResponsiveReactGridLayout extends React.Component<
     );
   }
 
-  render(): React.Element<typeof ReactGridLayout> {
+  render() {
     /* eslint-disable no-unused-vars */
     const {
       breakpoint,

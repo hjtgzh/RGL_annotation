@@ -12,7 +12,7 @@ export default class NoCompactingLayout extends React.PureComponent {
     rowHeight: 30,
     onLayoutChange: function() {},
     // This turns off compaction so you can place items wherever.
-    verticalCompact: false
+    compactType: null
   };
 
   constructor(props) {
