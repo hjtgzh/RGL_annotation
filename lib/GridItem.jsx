@@ -361,16 +361,19 @@ export default class GridItem extends React.Component {
     const newPosition = { top: 0, left: 0 };
 
     // TODO: this wont work on nested parents
+    // 网格布局
     const { offsetParent } = node;
     if (!offsetParent) return;
+    // 计算当前拖拽元素跟所在网格布局的位置
     const parentRect = offsetParent.getBoundingClientRect();
     const clientRect = node.getBoundingClientRect();
     const cLeft = clientRect.left / transformScale;
     const pLeft = parentRect.left / transformScale;
     const cTop = clientRect.top / transformScale;
     const pTop = parentRect.top / transformScale;
-    newPosition.left = cLeft - pLeft + offsetParent.scrollLeft;
+    newPosition.left = cLeft - pLeft + offsetParent.scrollLeft; // 元素滚动条到元素左边的距离
     newPosition.top = cTop - pTop + offsetParent.scrollTop;
+    // 拖拽元素的位置
     this.setState({ dragging: newPosition });
 
     // Call callback with this data
