@@ -286,7 +286,6 @@ export default class ReactGridLayout extends React.Component {
       allowOverlap
     );
 
-    console.log('moveElement---onDrag', { layout: JSON.stringify(layout) })
     this.props.onDrag(layout, oldDragItem, l, placeholder, e, node);
 
     // compact 操作的是 moveElement 之后的布局
@@ -320,8 +319,6 @@ export default class ReactGridLayout extends React.Component {
     const { cols, preventCollision, allowOverlap } = this.props;
     const l = getLayoutItem(layout, i);
     if (!l) return;
-
-    console.log('onDragStop---glt')
 
     // Move the element here
     const isUserAction = true;

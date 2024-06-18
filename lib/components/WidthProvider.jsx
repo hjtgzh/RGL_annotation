@@ -3,30 +3,6 @@ import * as React from "react";
 import PropTypes from "prop-types";
 import ResizeObserver from "resize-observer-polyfill";
 import clsx from "clsx";
-import type { ReactRef } from "../ReactGridLayoutPropTypes";
-
-type WPDefaultProps = {|
-  measureBeforeMount: boolean
-|};
-
-// eslint-disable-next-line no-unused-vars
-type WPProps = {|
-  className?: string,
-  style?: Object,
-  ...WPDefaultProps
-|};
-
-type WPState = {|
-  width: number
-|};
-
-type ComposedProps<Config> = {|
-  ...Config,
-  measureBeforeMount?: boolean,
-  className?: string,
-  style?: Object,
-  width?: number
-|};
 
 const layoutClassName = "react-grid-layout";
 
@@ -36,30 +12,30 @@ const layoutClassName = "react-grid-layout";
  * The Flow type is pretty janky here. I can't just spread `WPProps` into this returned object - I wish I could - but it triggers
  * a flow bug of some sort that causes it to stop typechecking.
  */
-export default function WidthProvideRGL<Config>(
-  ComposedComponent: React.AbstractComponent<Config>
-): React.AbstractComponent<ComposedProps<Config>> {
-  return class WidthProvider extends React.Component<
-    ComposedProps<Config>,
-    WPState
-  > {
-    static defaultProps: WPDefaultProps = {
+export default function WidthProvideRGL(
+  ComposedComponent
+) {
+  return class WidthProvider extends React.Component {
+    static defaultProps = {
       measureBeforeMount: false
     };
 
     static propTypes = {
       // If true, will not render children until mounted. Useful for getting the exact width before
       // rendering, to prevent any unsightly resizing.
-      measureBeforeMount: PropTypes.bool
+      measureBeforeMount: PropTypes.bool,
+      className: PropTypes.string,
+      style: PropTypes.object
     };
 
-    state: WPState = {
-      width: 1280
+    state = {
+      width: 1280,
+      height: null
     };
 
-    elementRef: ReactRef<HTMLDivElement> = React.createRef();
-    mounted: boolean = false;
-    resizeObserver: ResizeObserver;
+    elementRef = React.createRef();
+    mounted = false;
+    resizeObserver;
 
     componentDidMount() {
       this.mounted = true;
@@ -67,7 +43,8 @@ export default function WidthProvideRGL<Config>(
         const node = this.elementRef.current;
         if (node instanceof HTMLElement) {
           const width = entries[0].contentRect.width;
-          this.setState({ width });
+          const height = entries[0].contentRect.height;
+          this.setState({ width, height });
         }
       });
       const node = this.elementRef.current;
